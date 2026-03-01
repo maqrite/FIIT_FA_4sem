@@ -42,7 +42,7 @@ public abstract class BinarySearchTreeBase<TKey, TValue, TNode>(IComparer<TKey>?
             }
         }
 
-        TNode current = Root;
+        TNode? current = Root;
         TNode? parent = null;
 
         while (current != null)
@@ -77,7 +77,7 @@ public abstract class BinarySearchTreeBase<TKey, TValue, TNode>(IComparer<TKey>?
             return;
         }
 
-        if (Comparer.Compare(key, parent.Key) < 0)
+        if (Comparer.Compare(key, parent!.Key) < 0)
         {
             parent.Left = current;
         }
@@ -104,19 +104,19 @@ public abstract class BinarySearchTreeBase<TKey, TValue, TNode>(IComparer<TKey>?
 
     protected virtual void RemoveNode(TNode node)
     {
-        TNode? observerParent = null;
-        TNode? observerChild = null;
+        TNode? hookParent = null;
+        TNode? hookChild = null;
 
         if (node.Right == null)
         {
-            observerParent = node.Parent;
-            observerChild = node.Left;
+            hookParent = node.Parent;
+            hookChild = node.Left;
             Transplant(node, node.Left);
         }
         else if (node.Left == null)
         {
-            observerParent = node.Parent;
-            observerChild = node.Right;
+            hookParent = node.Parent;
+            hookChild = node.Right;
             Transplant(node, node.Right);
         }
         else
@@ -130,8 +130,8 @@ public abstract class BinarySearchTreeBase<TKey, TValue, TNode>(IComparer<TKey>?
 
             if (minNode.Parent != node)
             {
-                observerParent = minNode.Parent;
-                observerChild = minNode.Right;
+                hookParent = minNode.Parent;
+                hookChild = minNode.Right;
 
                 Transplant(minNode, minNode.Right);
                 minNode.Right = node.Right;
@@ -139,8 +139,8 @@ public abstract class BinarySearchTreeBase<TKey, TValue, TNode>(IComparer<TKey>?
             }
             else
             {
-                observerParent = minNode;
-                observerChild = minNode.Right;
+                hookParent = minNode;
+                hookChild = minNode.Right;
 
             }
 
@@ -150,7 +150,7 @@ public abstract class BinarySearchTreeBase<TKey, TValue, TNode>(IComparer<TKey>?
             minNode.Left.Parent = minNode;
         }
 
-        OnNodeRemoved(observerParent, observerChild);
+        OnNodeRemoved(hookParent, hookChild);
     }
 
     public virtual bool ContainsKey(TKey key) => FindNode(key) != null;
@@ -210,32 +210,70 @@ public abstract class BinarySearchTreeBase<TKey, TValue, TNode>(IComparer<TKey>?
 
     protected void RotateLeft(TNode x)
     {
-        throw new NotImplementedException();
+        var y = x.Right;
+        if (y == null) { return; }
+
+        if (y.Left != null)
+        {
+            y.Left.Parent = x;
+        }
+
+        x.Right = y.Left;
+        Transplant(x, y);
+        y.Left = x;
+        x.Parent = y;
     }
 
     protected void RotateRight(TNode y)
     {
-        throw new NotImplementedException();
+        var x = y.Left;
+        if (x == null) { return; }
+
+        if (x.Right != null)
+        {
+            x.Right.Parent = y;
+        }
+
+        y.Left = x.Right;
+        Transplant(y, x);
+        x.Right = y;
+        y.Parent = x;
     }
 
     protected void RotateBigLeft(TNode x)
     {
-        throw new NotImplementedException();
+        if (x.Right != null)
+        {
+            RotateRight(x.Right);
+        }
+        RotateLeft(x);
     }
 
     protected void RotateBigRight(TNode y)
     {
-        throw new NotImplementedException();
+        if (y.Left != null)
+        {
+            RotateLeft(y.Left);
+        }
+        RotateRight(y);
     }
 
     protected void RotateDoubleLeft(TNode x)
     {
-        throw new NotImplementedException();
+        RotateLeft(x);
+        if (x.Parent != null)
+        {
+            RotateLeft(x.Parent);
+        }
     }
 
     protected void RotateDoubleRight(TNode y)
     {
-        throw new NotImplementedException();
+        RotateRight(y);
+        if (y.Parent != null)
+        {
+            RotateRight(y.Parent);
+        }
     }
 
     protected void Transplant(TNode u, TNode? v)
@@ -278,23 +316,48 @@ public abstract class BinarySearchTreeBase<TKey, TValue, TNode>(IComparer<TKey>?
         IEnumerable<TreeEntry<TKey, TValue>>,
         IEnumerator<TreeEntry<TKey, TValue>>
     {
-        // probably add something here
-        private readonly TraversalStrategy _strategy; // or make it template parameter?
+
+        private readonly Stack<TNode> _stack;
+        private TNode? _current;
+        private TreeEntry<TKey, TValue> _currentEntry;
+
+        private readonly TraversalStrategy _strategy;
+
+        public TreeIterator(TNode? root, TraversalStrategy strategy)
+        {
+            _strategy = strategy;
+            _stack = new Stack<TNode>();
+            _current = root;
+            _currentEntry = default;
+        }
 
         public IEnumerator<TreeEntry<TKey, TValue>> GetEnumerator() => this;
         IEnumerator IEnumerable.GetEnumerator() => this;
 
-        public TreeEntry<TKey, TValue> Current => throw new NotImplementedException();
+        public TreeEntry<TKey, TValue> Current => _currentEntry;
         object IEnumerator.Current => Current;
-
 
         public bool MoveNext()
         {
             if (_strategy == TraversalStrategy.InOrder)
             {
-                throw new NotImplementedException();
+                while (_current != null)
+                {
+                    _stack.Push(_current);
+                    _current = _current.Left;
+                }
+
+                if (_stack.Count == 0)
+                {
+                    return false;
+                }
+
+                TNode x = _stack.Pop();
+                _currentEntry = new(x.Key, x.Value, 0); //заглушка на глубину пока стоит
+                _current = x.Right;
+                return true;
             }
-            throw new NotImplementedException("Strategy not implemented");
+            return false;
         }
 
         public void Reset()
