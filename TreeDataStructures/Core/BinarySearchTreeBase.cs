@@ -15,8 +15,8 @@ public abstract class BinarySearchTreeBase<TKey, TValue, TNode>(IComparer<TKey>?
 
     public bool IsReadOnly => false;
 
-    public ICollection<TKey> Keys => throw new NotImplementedException();
-    public ICollection<TValue> Values => throw new NotImplementedException();
+    public ICollection<TKey> Keys => InOrder().Select(e => e.Key).ToList();
+    public ICollection<TValue> Values => InOrder().Select(e => e.Value).ToList();
 
 
     public virtual void Add(TKey key, TValue value)
@@ -170,7 +170,19 @@ public abstract class BinarySearchTreeBase<TKey, TValue, TNode>(IComparer<TKey>?
     public TValue this[TKey key]
     {
         get => TryGetValue(key, out TValue? val) ? val : throw new KeyNotFoundException();
-        set => Add(key, value);
+        set
+        {
+            TNode? node = FindNode(key);
+
+            if (node != null)
+            {
+                node.Value = value;
+            }
+            else
+            {
+                Add(key, value);
+            }
+        }
     }
 
 
@@ -418,7 +430,7 @@ public abstract class BinarySearchTreeBase<TKey, TValue, TNode>(IComparer<TKey>?
 
                 return true;
             }
-            else if (_strategy == TraversalStrategy.PreOrderReverse)
+            else if (_strategy == TraversalStrategy.PostOrderReverse)
             {
                 if (_current == null)
                 {
@@ -471,7 +483,7 @@ public abstract class BinarySearchTreeBase<TKey, TValue, TNode>(IComparer<TKey>?
 
                 return false;
             }
-            else if (_strategy == TraversalStrategy.PostOrderReverse)
+            else if (_strategy == TraversalStrategy.PreOrderReverse)
             {
                 while (_current != null || _stack.Count > 0)
                 {
@@ -523,7 +535,9 @@ public abstract class BinarySearchTreeBase<TKey, TValue, TNode>(IComparer<TKey>?
 
     public IEnumerator<KeyValuePair<TKey, TValue>> GetEnumerator()
     {
-        throw new NotImplementedException();
+        return InOrder()
+            .Select(e => new KeyValuePair<TKey, TValue>(e.Key, e.Value))
+            .GetEnumerator();
     }
 
     IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
@@ -532,6 +546,12 @@ public abstract class BinarySearchTreeBase<TKey, TValue, TNode>(IComparer<TKey>?
     public void Add(KeyValuePair<TKey, TValue> item) => Add(item.Key, item.Value);
     public void Clear() { Root = null; Count = 0; }
     public bool Contains(KeyValuePair<TKey, TValue> item) => ContainsKey(item.Key);
-    public void CopyTo(KeyValuePair<TKey, TValue>[] array, int arrayIndex) => throw new NotImplementedException();
+    public void CopyTo(KeyValuePair<TKey, TValue>[] array, int arrayIndex)
+    {
+        foreach (var kvp in this)
+        {
+            array[arrayIndex++] = kvp;
+        }
+    }
     public bool Remove(KeyValuePair<TKey, TValue> item) => Remove(item.Key);
 }
