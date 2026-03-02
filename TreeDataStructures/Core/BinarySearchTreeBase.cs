@@ -383,7 +383,7 @@ public abstract class BinarySearchTreeBase<TKey, TValue, TNode>(IComparer<TKey>?
                 }
 
                 TNode x = _stack.Pop();
-                _currentEntry = new(x.Key, x.Value, 0); //заглушка на глубину пока стоит
+                _currentEntry = new(x.Key, x.Value, GetDepth(x));
                 _current = x.Right;
 
                 return true;
@@ -402,7 +402,7 @@ public abstract class BinarySearchTreeBase<TKey, TValue, TNode>(IComparer<TKey>?
                 }
 
                 TNode x = _stack.Pop();
-                _currentEntry = new(x.Key, x.Value, 0); //заглушка на глубину пока стоит
+                _currentEntry = new(x.Key, x.Value, GetDepth(x));
                 _current = x.Left;
 
                 return true;
@@ -419,7 +419,7 @@ public abstract class BinarySearchTreeBase<TKey, TValue, TNode>(IComparer<TKey>?
                     _current = _stack.Pop();
                 }
 
-                _currentEntry = new(_current!.Key, _current.Value, 0); //и тут
+                _currentEntry = new(_current!.Key, _current.Value, GetDepth(_current));
 
                 if (_current.Right != null)
                 {
@@ -442,7 +442,7 @@ public abstract class BinarySearchTreeBase<TKey, TValue, TNode>(IComparer<TKey>?
                     _current = _stack.Pop();
                 }
 
-                _currentEntry = new(_current!.Key, _current.Value, 0); //и тут
+                _currentEntry = new(_current!.Key, _current.Value, GetDepth(_current));
 
                 if (_current.Left != null)
                 {
@@ -473,7 +473,7 @@ public abstract class BinarySearchTreeBase<TKey, TValue, TNode>(IComparer<TKey>?
                         }
                         else
                         {
-                            _currentEntry = new(peekNode.Key, peekNode.Value, 0); //тут тоже
+                            _currentEntry = new(peekNode.Key, peekNode.Value, GetDepth(peekNode));
                             _lastVisited = _stack.Pop();
 
                             return true;
@@ -502,7 +502,7 @@ public abstract class BinarySearchTreeBase<TKey, TValue, TNode>(IComparer<TKey>?
                         }
                         else
                         {
-                            _currentEntry = new(peekNode.Key, peekNode.Value, 0); //тут тоже
+                            _currentEntry = new(peekNode.Key, peekNode.Value, GetDepth(peekNode));
                             _lastVisited = _stack.Pop();
 
                             return true;
@@ -516,6 +516,20 @@ public abstract class BinarySearchTreeBase<TKey, TValue, TNode>(IComparer<TKey>?
 
             throw new NotImplementedException($"strategy {_strategy} not supported");
 
+        }
+
+        private int GetDepth(TNode? node)
+        {
+            int depth = 0;  //root starts with 0 but can be 1
+            var current = node;
+
+            while (current != null && current.Parent != null)
+            {
+                depth++;
+                current = current.Parent;
+            }
+
+            return depth;
         }
 
         public void Reset()
