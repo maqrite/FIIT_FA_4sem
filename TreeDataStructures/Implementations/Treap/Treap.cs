@@ -20,7 +20,9 @@ public class Treap<TKey, TValue> : BinarySearchTreeBase<TKey, TValue, TreapNode<
 
         if (Comparer.Compare(root.Key, key) <= 0)
         {
-            (TreapNode<TKey, TValue>? SplitLeft, TreapNode<TKey, TValue>? SplitRight) = Split(root.Right, key);
+            (TreapNode<TKey, TValue>? SplitLeft, TreapNode<TKey, TValue>? SplitRight) =
+                Split(root.Right, key);
+
             root.Right = SplitLeft;
 
             if (root.Right != null)
@@ -39,7 +41,9 @@ public class Treap<TKey, TValue> : BinarySearchTreeBase<TKey, TValue, TreapNode<
 
         else
         {
-            (TreapNode<TKey, TValue>? SplitLeft, TreapNode<TKey, TValue>? SplitRight) = Split(root.Left, key);
+            (TreapNode<TKey, TValue>? SplitLeft, TreapNode<TKey, TValue>? SplitRight) =
+                Split(root.Left, key);
+
             root.Left = SplitRight;
 
             if (root.Left != null)
@@ -100,12 +104,45 @@ public class Treap<TKey, TValue> : BinarySearchTreeBase<TKey, TValue, TreapNode<
 
     public override void Add(TKey key, TValue value)
     {
-        throw new NotImplementedException("Implement Add using Split and Merge");
+        if (ContainsKey(key) == true)
+        {
+            throw new ArgumentException($"Error: key {key} is in Treap now");
+        }
+
+        var newNode = CreateNode(key, value);
+
+        (TreapNode<TKey, TValue>? LTree, TreapNode<TKey, TValue>? RTree) =
+            Split(this.Root, key);
+
+        var MergedL = Merge(LTree, newNode);
+        var result = Merge(MergedL, RTree);
+
+        this.Root = result;
+        if (this.Root != null)
+        {
+            this.Root.Parent = null;
+        }
+
+        Count++;
     }
 
     public override bool Remove(TKey key)
     {
-        throw new NotImplementedException("Implement Remove using Split and Merge");
+        TreapNode<TKey, TValue>? NodeToRemove = FindNode(key);
+
+        if (NodeToRemove == null)
+        {
+            return false;
+        }
+
+        TreapNode<TKey, TValue>? MergedChildren =
+            Merge(NodeToRemove.Left, NodeToRemove.Right);
+
+        Transplant(NodeToRemove, MergedChildren);
+
+        Count--;
+
+        return true;
     }
 
     protected override TreapNode<TKey, TValue> CreateNode(TKey key, TValue value)
