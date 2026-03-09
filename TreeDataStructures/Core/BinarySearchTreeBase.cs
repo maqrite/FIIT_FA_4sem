@@ -220,7 +220,7 @@ public abstract class BinarySearchTreeBase<TKey, TValue, TNode>(IComparer<TKey>?
         return null;
     }
 
-    protected void RotateLeft(TNode x)
+    protected virtual void RotateLeft(TNode x)
     {
         var y = x.Right;
         if (y == null) { return; }
@@ -236,7 +236,7 @@ public abstract class BinarySearchTreeBase<TKey, TValue, TNode>(IComparer<TKey>?
         x.Parent = y;
     }
 
-    protected void RotateRight(TNode y)
+    protected virtual void RotateRight(TNode y)
     {
         var x = y.Left;
         if (x == null) { return; }
@@ -348,12 +348,14 @@ public abstract class BinarySearchTreeBase<TKey, TValue, TNode>(IComparer<TKey>?
         private readonly Stack<TNode> _stack;
         private TNode? _current;
         private TNode? _lastVisited;
+        private TNode? _root;
         private TreeEntry<TKey, TValue> _currentEntry;
 
         private readonly TraversalStrategy _strategy;
 
         public TreeIterator(TNode? root, TraversalStrategy strategy)
         {
+            _root = root;
             _strategy = strategy;
             _stack = new Stack<TNode>();
             _current = root;
@@ -534,13 +536,24 @@ public abstract class BinarySearchTreeBase<TKey, TValue, TNode>(IComparer<TKey>?
 
         public void Reset()
         {
-            throw new NotImplementedException();
+            _stack.Clear();
+            _current = _root;
+            _currentEntry = default;
+            _lastVisited = null;
         }
 
 
         public void Dispose()
         {
-            // TODO release managed resources here
+            if (_stack != null)
+            {
+                _stack.Clear();
+
+            }
+
+            _root = null;
+            _current = null;
+            _lastVisited = null;
         }
     }
 
