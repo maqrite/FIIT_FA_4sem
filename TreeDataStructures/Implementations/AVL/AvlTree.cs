@@ -19,6 +19,17 @@ public class AvlTree<TKey, TValue> : BinarySearchTreeBase<TKey, TValue, AvlNode<
         }
     }
 
+    protected override void OnNodeRemoved(AvlNode<TKey, TValue>? parent, AvlNode<TKey, TValue>? child)
+    {
+        var currentNode = parent ?? child;
+
+        while (currentNode != null)
+        {
+            Balance(currentNode);
+            currentNode = currentNode.Parent;
+        }
+    }
+
     protected private int GetHeight(AvlNode<TKey, TValue>? node)
     {
         if (node == null)
