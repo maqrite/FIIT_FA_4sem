@@ -19,21 +19,47 @@ public class RedBlackTree<TKey, TValue> : BinarySearchTreeBase<TKey, TValue, RbN
             {
                 if (IsRed(uncle))
                 {
-                    //по идее красим родителя в черный 
-                    //дядю в черный (осуждаю) 
-                    //потом дедушку в черни 
-                    //-> newNode = grandParent
+                    newNode.Parent!.Color = RbColor.Black;
+                    uncle!.Color = RbColor.Black;
+                    grandParent!.Color = RbColor.Red;
+                    newNode = grandParent;
                 }
                 else
                 {
-                    //логика поворотов дальше впадлу пока
+                    if (newNode == newNode.Parent!.Right)
+                    {
+                        newNode = newNode.Parent;
+                        RotateLeft(newNode);
+                    }
+
+                    newNode.Parent!.Color = RbColor.Black;
+                    grandParent.Color = RbColor.Red;
+                    RotateRight(grandParent);
                 }
             }
 
             // правая сторона
-            else if (true)
+            else if (grandParent != null && newNode.Parent == grandParent.Right)
             {
+                if (IsRed(uncle))
+                {
+                    newNode.Parent!.Color = RbColor.Black;
+                    uncle!.Color = RbColor.Black;
+                    grandParent!.Color = RbColor.Red;
+                    newNode = grandParent;
+                }
+                else
+                {
+                    if (newNode == newNode.Parent!.Left)
+                    {
+                        newNode = newNode.Parent;
+                        RotateRight(newNode);
+                    }
 
+                    newNode.Parent!.Color = RbColor.Black;
+                    grandParent.Color = RbColor.Red;
+                    RotateLeft(grandParent);
+                }
             }
         }
 
@@ -80,6 +106,4 @@ public class RedBlackTree<TKey, TValue> : BinarySearchTreeBase<TKey, TValue, RbN
             return grandParent.Left;
         }
     }
-
-
 }
