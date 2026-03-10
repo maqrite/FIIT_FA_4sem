@@ -73,12 +73,13 @@ public class RedBlackTree<TKey, TValue> : BinarySearchTreeBase<TKey, TValue, RbN
         var current = child;
         var currentParent = parent;
 
-        while (current != this.Root && IsBlack(current))
+        while (current != this.Root && currentParent != null && IsBlack(current))
         {
             // левая сторона
             if (current == currentParent!.Left)
             {
                 var sibling = GetSibling(current, currentParent);
+                if (sibling == null) { break; }
 
                 if (IsRed(sibling))
                 {
@@ -90,7 +91,8 @@ public class RedBlackTree<TKey, TValue> : BinarySearchTreeBase<TKey, TValue, RbN
 
                 if (IsBlack(sibling?.Left) && IsBlack(sibling?.Right))
                 {
-                    sibling!.Color = RbColor.Red;
+                    if (sibling != null) { sibling!.Color = RbColor.Red; }
+
                     current = currentParent;
                     currentParent = current?.Parent;
                     continue;
@@ -115,6 +117,7 @@ public class RedBlackTree<TKey, TValue> : BinarySearchTreeBase<TKey, TValue, RbN
             else
             {
                 var sibling = GetSibling(current, currentParent);
+                if (sibling == null) { break; }
 
                 if (IsRed(sibling))
                 {
@@ -126,7 +129,8 @@ public class RedBlackTree<TKey, TValue> : BinarySearchTreeBase<TKey, TValue, RbN
 
                 if (IsBlack(sibling?.Right) && IsBlack(sibling?.Left))
                 {
-                    sibling!.Color = RbColor.Red;
+
+                    if (sibling != null) { sibling!.Color = RbColor.Red; }
                     current = currentParent;
                     currentParent = current?.Parent;
                     continue;
