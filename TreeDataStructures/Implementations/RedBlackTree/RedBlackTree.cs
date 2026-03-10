@@ -70,7 +70,88 @@ public class RedBlackTree<TKey, TValue> : BinarySearchTreeBase<TKey, TValue, RbN
     }
     protected override void OnNodeRemoved(RbNode<TKey, TValue>? parent, RbNode<TKey, TValue>? child)
     {
-        throw new NotImplementedException();
+        var current = child;
+        var currentParent = parent;
+
+        while (current != this.Root && IsBlack(current))
+        {
+            // левая сторона
+            if (current == currentParent!.Left)
+            {
+                var sibling = GetSibling(current, currentParent);
+
+                if (IsRed(sibling))
+                {
+                    sibling!.Color = RbColor.Black;
+                    currentParent!.Color = RbColor.Red;
+                    RotateLeft(currentParent);
+                    sibling = currentParent.Right;
+                }
+
+                if (IsBlack(sibling?.Left) && IsBlack(sibling?.Right))
+                {
+                    sibling!.Color = RbColor.Red;
+                    current = currentParent;
+                    currentParent = current?.Parent;
+                    continue;
+                }
+
+                if (IsBlack(sibling!.Right))
+                {
+                    sibling.Left!.Color = RbColor.Black;
+                    sibling.Color = RbColor.Red;
+                    RotateRight(sibling);
+                    sibling = currentParent!.Right;
+                }
+
+                sibling!.Color = currentParent.Color;
+                currentParent.Color = RbColor.Black;
+                sibling.Right!.Color = RbColor.Black;
+                RotateLeft(currentParent);
+                current = this.Root;
+            }
+
+            // правая сторона
+            else
+            {
+                var sibling = GetSibling(current, currentParent);
+
+                if (IsRed(sibling))
+                {
+                    sibling!.Color = RbColor.Black;
+                    currentParent!.Color = RbColor.Red;
+                    RotateRight(currentParent);
+                    sibling = currentParent.Left;
+                }
+
+                if (IsBlack(sibling?.Right) && IsBlack(sibling?.Left))
+                {
+                    sibling!.Color = RbColor.Red;
+                    current = currentParent;
+                    currentParent = current?.Parent;
+                    continue;
+                }
+
+                if (IsBlack(sibling!.Left))
+                {
+                    sibling.Right!.Color = RbColor.Black;
+                    sibling.Color = RbColor.Red;
+                    RotateLeft(sibling);
+                    sibling = currentParent!.Left;
+                }
+
+                sibling!.Color = currentParent.Color;
+                currentParent.Color = RbColor.Black;
+                sibling.Left!.Color = RbColor.Black;
+                RotateRight(currentParent);
+                current = this.Root;
+            }
+        }
+
+        if (current != null)
+        {
+            current.Color = RbColor.Black;
+        }
     }
 
     protected bool IsRed(RbNode<TKey, TValue>? node)
@@ -106,4 +187,12 @@ public class RedBlackTree<TKey, TValue> : BinarySearchTreeBase<TKey, TValue, RbN
             return grandParent.Left;
         }
     }
+
+    protected RbNode<TKey, TValue>? GetSibling(RbNode<TKey, TValue>? node, RbNode<TKey, TValue>? parent)
+    {
+        if (parent == null) { return null; }
+
+        return node == parent.Left ? parent.Right : parent.Left;
+    }
 }
+
