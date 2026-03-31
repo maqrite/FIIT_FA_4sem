@@ -114,10 +114,66 @@ public sealed class BetterBigInteger : IBigInteger
         return MemoryMarshal.CreateReadOnlySpan(ref _smallValue, 1);
     }
 
-    public int CompareTo(IBigInteger? other) => throw new NotImplementedException();
-    public bool Equals(IBigInteger? other) => throw new NotImplementedException();
+    public int CompareTo(IBigInteger? other)
+    {
+        if (other == null)
+        {
+            return 1;
+        }
+
+        if (!this.IsNegative && other.IsNegative)
+        {
+            return 1;
+        }
+        else if (this.IsNegative && !other.IsNegative)
+        {
+            return -1;
+        }
+
+        var thisDigits = this.GetDigits();
+        var otherDigits = other.GetDigits();
+
+        if (thisDigits.Length > otherDigits.Length)
+        {
+            return this.IsNegative ? -1 : 1;
+        }
+
+        if (thisDigits.Length < otherDigits.Length)
+        {
+            return this.IsNegative ? 1 : -1;
+        }
+
+        for (int i = thisDigits.Length - 1; i >= 0; i--)
+        {
+            if (thisDigits[i] > otherDigits[i])
+            {
+                return this.IsNegative ? -1 : 1;
+            }
+            else if (thisDigits[i] < otherDigits[i])
+            {
+                return this.IsNegative ? 1 : -1;
+            }
+        }
+
+        return 0;
+    }
+
+    public bool Equals(IBigInteger? other) => CompareTo(other) == 0;
     public override bool Equals(object? obj) => obj is IBigInteger other && Equals(other);
-    public override int GetHashCode() => throw new NotImplementedException();
+    public override int GetHashCode()
+    {
+        var hash = new HashCode();
+
+        hash.Add(IsNegative);
+
+        var digits = this.GetDigits();
+        for (int i = 0; i < digits.Length; i++)
+        {
+            hash.Add(digits[i]);
+        }
+
+        return hash.ToHashCode();
+    }
 
 
     public static BetterBigInteger operator +(BetterBigInteger a, BetterBigInteger b) => throw new NotImplementedException();
