@@ -1,6 +1,7 @@
 ﻿using Arithmetic.BigInt.Interfaces;
 using Arithmetic.BigInt.MultiplyStrategy;
 using System.Runtime.InteropServices;
+using System.Text;
 
 namespace Arithmetic.BigInt;
 
@@ -176,9 +177,37 @@ public sealed class BetterBigInteger : IBigInteger
     }
 
 
-    public static BetterBigInteger operator +(BetterBigInteger a, BetterBigInteger b) => throw new NotImplementedException();
-    public static BetterBigInteger operator -(BetterBigInteger a, BetterBigInteger b) => throw new NotImplementedException();
-    public static BetterBigInteger operator -(BetterBigInteger a) => throw new NotImplementedException();
+    public static BetterBigInteger operator +(BetterBigInteger a, BetterBigInteger b)
+    {
+        BetterBigInteger newBigInt;
+        bool signA = a.IsNegative;
+        bool signB = b.IsNegative;
+        if (signA == signB)
+        {
+            uint[] sum = AddMagnitudes(a.GetDigits(), b.GetDigits());
+            newBigInt = new(sum, signA);
+        }
+        else
+        {
+            var bigger = CompareMagnitudes(a.GetDigits(), b.GetDigits()) > 0 ? a : b;
+            var lower = (bigger == a) ? b : a;
+            var biggerSign = bigger.IsNegative;
+            uint[] diffArray = SubtractMagnitudes(bigger.GetDigits(), lower.GetDigits());
+            newBigInt = new(diffArray, biggerSign);
+        }
+
+        return newBigInt;
+    }
+
+    public static BetterBigInteger operator -(BetterBigInteger a, BetterBigInteger b)
+    {
+        return a + (-b);
+    }
+
+    public static BetterBigInteger operator -(BetterBigInteger a)
+    {
+        return new BetterBigInteger(a.GetDigits().ToArray(), !a.IsNegative);
+    }
     public static BetterBigInteger operator /(BetterBigInteger a, BetterBigInteger b) => throw new NotImplementedException();
     public static BetterBigInteger operator %(BetterBigInteger a, BetterBigInteger b) => throw new NotImplementedException();
 
@@ -200,8 +229,83 @@ public sealed class BetterBigInteger : IBigInteger
     public static bool operator <=(BetterBigInteger a, BetterBigInteger b) => a.CompareTo(b) <= 0;
     public static bool operator >=(BetterBigInteger a, BetterBigInteger b) => a.CompareTo(b) >= 0;
 
+    public BetterBigInteger Abs()
+    {
+        if (!IsNegative) return this;
+
+        return new BetterBigInteger(GetDigits().ToArray(), false);
+    }
+
+    public bool IsZero => this._data == null && this._smallValue == 0;
+    public bool IsOne => _data == null && _smallValue == 1 && !IsNegative;
+    public bool IsEven => (_data == null ? _smallValue : _data[0]) % 2 == 0;
+
     public override string ToString() => ToString(10);
-    public string ToString(int radix) => throw new NotImplementedException();
+
+    public string ToString(int radix)
+    {
+
+        if (radix < 2 || radix > 36) { throw new ArgumentOutOfRangeException(nameof(radix)); }
+
+        if (this.IsZero)
+        {
+            return "0";
+        }
+
+        var sb = new StringBuilder();
+        uint[] tempDigits = GetDigits().ToArray();
+        int lastIndex = tempDigits.Length - 1;
+
+        while (lastIndex >= 0)
+        {
+            var remainder = DivideInPlace(tempDigits, (uint)radix);
+
+            if (remainder < 10)
+            {
+                sb.Append((char)('0' + remainder));
+            }
+            else if (remainder >= 10)
+            {
+                sb.Append((char)('A' + (remainder - 10)));
+            }
+
+            while (lastIndex >= 0 && tempDigits[lastIndex] == 0)
+            {
+                lastIndex--;
+            }
+        }
+
+        if (this.IsNegative)
+        {
+            sb.Append('-');
+        }
+
+        return ReverseStringBuilder(sb);
+    }
+
+    private string ReverseStringBuilder(StringBuilder sb)
+    {
+        char[] chars = new char[sb.Length];
+        for (int i = 0; i < sb.Length; i++)
+        {
+            chars[i] = sb[sb.Length - 1 - i];
+        }
+        return new string(chars);
+    }
+
+    private static uint DivideInPlace(uint[] digits, uint divisor)
+    {
+        ulong remainder = 0;
+
+        for (int i = digits.Length - 1; i >= 0; --i)
+        {
+            var current = (remainder << 32) | (ulong)digits[i];
+            digits[i] = (uint)(current / divisor);
+            remainder = current % divisor;
+        }
+
+        return (uint)remainder;
+    }
 
 
     private void InitializeFrom(uint[] digits, bool isNegative)
@@ -239,5 +343,79 @@ public sealed class BetterBigInteger : IBigInteger
             _signBit = isNegative ? 1 : 0;
         }
 
+    }
+
+    private static uint[] AddMagnitudes(ReadOnlySpan<uint> a, ReadOnlySpan<uint> b)
+    {
+        int maxLength = Math.Max(a.Length, b.Length);
+        uint[] result = new uint[maxLength + 1];
+
+        ulong carry = 0;
+
+        for (int i = 0; i < maxLength; i++)
+        {
+            ulong valA = i < a.Length ? a[i] : 0;
+            ulong valB = i < b.Length ? b[i] : 0;
+
+            ulong currentSum = valA + valB + carry;
+
+            result[i] = (uint)currentSum;
+
+            carry = currentSum >> 32;
+        }
+
+        result[maxLength] = (uint)carry;
+
+        return result;
+    }
+
+    private static uint[] SubtractMagnitudes(ReadOnlySpan<uint> a, ReadOnlySpan<uint> b)
+    {
+        uint[] result = new uint[a.Length];
+
+        long borrow = 0;
+
+        for (int i = 0; i < a.Length; i++)
+        {
+            long valA = a[i];
+            long valB = i < b.Length ? b[i] : 0;
+
+            long diff = valA - valB - borrow;
+
+            if (diff < 0)
+            {
+                diff += 1L << 32;
+                borrow = 1;
+            }
+            else
+            {
+                borrow = 0;
+            }
+
+            result[i] = (uint)diff;
+        }
+
+        return result;
+    }
+
+    private static int CompareMagnitudes(ReadOnlySpan<uint> a, ReadOnlySpan<uint> b)
+    {
+        if (a.Length > b.Length) { return 1; }
+        if (a.Length < b.Length) { return -1; }
+
+        for (int i = a.Length - 1; i >= 0; i--)
+        {
+            if (a[i] > b[i])
+            {
+                return 1;
+            }
+
+            if (a[i] < b[i])
+            {
+                return -1;
+            }
+        }
+
+        return 0;
     }
 }
