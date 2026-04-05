@@ -215,12 +215,106 @@ public sealed class BetterBigInteger : IBigInteger
     public static BetterBigInteger operator *(BetterBigInteger a, BetterBigInteger b)
        => throw new NotImplementedException("Умножение делегируется стратегии, выбирать необходимо в зависимости от размеров чисел");
 
-    public static BetterBigInteger operator ~(BetterBigInteger a) => throw new NotImplementedException();
+    public static BetterBigInteger operator ~(BetterBigInteger a)
+    {
+        return new BetterBigInteger([1]); ///
+    }
+
     public static BetterBigInteger operator &(BetterBigInteger a, BetterBigInteger b) => throw new NotImplementedException();
     public static BetterBigInteger operator |(BetterBigInteger a, BetterBigInteger b) => throw new NotImplementedException();
     public static BetterBigInteger operator ^(BetterBigInteger a, BetterBigInteger b) => throw new NotImplementedException();
-    public static BetterBigInteger operator <<(BetterBigInteger a, int shift) => throw new NotImplementedException();
-    public static BetterBigInteger operator >>(BetterBigInteger a, int shift) => throw new NotImplementedException();
+    public static BetterBigInteger operator >>(BetterBigInteger a, int shift)
+    {
+        if (shift == 0)
+        {
+            return a;
+        }
+
+        if (shift < 0)
+        {
+            throw new ArgumentOutOfRangeException("incorrect shift");
+        }
+
+        int blockShift = shift / 32;
+        int bitShift = shift % 32;
+        var oldDigits = a.GetDigits();
+
+        if (blockShift >= oldDigits.Length)
+        {
+            return new BetterBigInteger(new uint[0], a.IsNegative);
+        }
+
+        uint[] newNumDigits = new uint[oldDigits.Length - blockShift];
+
+        for (int i = 0; i <= newNumDigits.Length - 1; ++i)
+        {
+            var part1 = oldDigits[i + blockShift] >> bitShift;
+            if (bitShift > 0)
+            {
+                uint part2;
+
+                if ((i + blockShift + 1) > oldDigits.Length - 1)
+                {
+                    part2 = 0;
+                }
+                else
+                {
+
+                    part2 = oldDigits[i + blockShift + 1] << (32 - bitShift);
+                }
+
+                newNumDigits[i] = part1 | part2;
+            }
+            else if (bitShift == 0)
+            {
+                newNumDigits[i] = oldDigits[i + blockShift];
+            }
+        }
+
+        return new BetterBigInteger(newNumDigits, a.IsNegative);
+    }
+
+    public static BetterBigInteger operator <<(BetterBigInteger a, int shift)
+    {
+        if (shift == 0)
+        {
+            return a;
+        }
+
+        if (shift < 0)
+        {
+            throw new ArgumentOutOfRangeException("incorrect shift");
+        }
+
+        int blockShift = shift / 32;
+        int bitShift = shift % 32;
+        var oldDigits = a.GetDigits();
+
+        uint[] newNumDigits = new uint[oldDigits.Length + blockShift + 1];
+
+        for (int i = 0; i <= oldDigits.Length - 1; ++i)
+        {
+            uint part1 = oldDigits[i] << bitShift;
+            uint part2 = 0;
+
+            if (bitShift > 0)
+            {
+                if (i > 0)
+                {
+                    part2 = oldDigits[i - 1] >> (32 - bitShift);
+                }
+            }
+
+            newNumDigits[i + blockShift] = part1 | part2;
+        }
+
+        if (bitShift > 0)
+        {
+            newNumDigits[oldDigits.Length + blockShift] = oldDigits[oldDigits.Length - 1] >> (32 - bitShift);
+        }
+
+        return new BetterBigInteger(newNumDigits, a.IsNegative);
+    }
 
     public static bool operator ==(BetterBigInteger a, BetterBigInteger b) => Equals(a, b);
     public static bool operator !=(BetterBigInteger a, BetterBigInteger b) => !Equals(a, b);
