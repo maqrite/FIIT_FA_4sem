@@ -495,10 +495,30 @@ public sealed class BetterBigInteger : IBigInteger
 
         if (blockShift >= oldDigits.Length)
         {
-            return new BetterBigInteger(new uint[0], a.IsNegative);
+            if (a.IsNegative)
+            {
+                return new BetterBigInteger(new uint[] { 1 }, true);
+            }
+
+            return BetterBigInteger.Zero;
         }
 
         uint[] newNumDigits = new uint[oldDigits.Length - blockShift];
+        bool lostAnySetBit = false;
+
+        for (int i = 0; i < blockShift; ++i)
+        {
+            if (oldDigits[i] != 0)
+            {
+                lostAnySetBit = true;
+            }
+        }
+
+        uint mask = (1u << bitShift) - 1;
+        if ((oldDigits[blockShift] & mask) != 0)
+        {
+            lostAnySetBit = true;
+        }
 
         for (int i = 0; i < newNumDigits.Length; ++i)
         {
@@ -523,6 +543,11 @@ public sealed class BetterBigInteger : IBigInteger
             {
                 newNumDigits[i] = oldDigits[i + blockShift];
             }
+        }
+
+        if (a.IsNegative && lostAnySetBit)
+        {
+            newNumDigits = AddMagnitudes([1], newNumDigits);
         }
 
         return new BetterBigInteger(newNumDigits, a.IsNegative);
