@@ -12,7 +12,7 @@ public sealed class BetterBigInteger : IBigInteger
     private uint _smallValue; // Если число маленькое, храним его прямо в этом поле, а _data == null.
     private uint[]? _data;
 
-    private const int KARATSUBA_THRESHOLD = 64;
+    internal const int KARATSUBA_THRESHOLD = 64;
     private const int FFT_THRESHOLD = 1024;
 
     public bool IsNegative => _signBit == 1;
@@ -719,7 +719,7 @@ public sealed class BetterBigInteger : IBigInteger
 
     }
 
-    private static uint[] AddMagnitudes(ReadOnlySpan<uint> a, ReadOnlySpan<uint> b)
+    internal static uint[] AddMagnitudes(ReadOnlySpan<uint> a, ReadOnlySpan<uint> b)
     {
         int maxLength = Math.Max(a.Length, b.Length);
         uint[] result = new uint[maxLength + 1];
@@ -743,7 +743,7 @@ public sealed class BetterBigInteger : IBigInteger
         return result;
     }
 
-    private static uint[] SubtractMagnitudes(ReadOnlySpan<uint> a, ReadOnlySpan<uint> b)
+    internal static uint[] SubtractMagnitudes(ReadOnlySpan<uint> a, ReadOnlySpan<uint> b)
     {
         uint[] result = new uint[a.Length];
 

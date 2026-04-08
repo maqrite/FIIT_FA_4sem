@@ -12,7 +12,7 @@ internal class SimpleMultiplier : IMultiplier
         return new BetterBigInteger(resultDigits, resultNegative);
     }
 
-    private static uint[] MultiplyMagnitudes(ReadOnlySpan<uint> a, ReadOnlySpan<uint> b)
+    internal static uint[] MultiplyMagnitudes(ReadOnlySpan<uint> a, ReadOnlySpan<uint> b)
     {
         uint[] result = new uint[a.Length + b.Length];
 
