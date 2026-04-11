@@ -13,7 +13,7 @@ public sealed class BetterBigInteger : IBigInteger
     private uint[]? _data;
 
     internal const int KARATSUBA_THRESHOLD = 64;
-    private const int FFT_THRESHOLD = 1024;
+    internal const int FFT_THRESHOLD = 1024;
 
     public bool IsNegative => _signBit == 1;
 
@@ -219,7 +219,6 @@ public sealed class BetterBigInteger : IBigInteger
     {
         return DivRem(a, b).Remainder;
     }
-
 
     public static BetterBigInteger operator *(BetterBigInteger a, BetterBigInteger b)
     {
@@ -716,7 +715,6 @@ public sealed class BetterBigInteger : IBigInteger
             Array.Copy(digits, _data, realLength);
             _signBit = isNegative ? 1 : 0;
         }
-
     }
 
     internal static uint[] AddMagnitudes(ReadOnlySpan<uint> a, ReadOnlySpan<uint> b)
@@ -944,5 +942,21 @@ public sealed class BetterBigInteger : IBigInteger
         }
 
         return (qDigits, rDigits);
+    }
+
+    internal static uint[] TrimZeros(uint[] arr)
+    {
+        int realLength = arr.Length;
+        while (realLength > 1 && arr[realLength - 1] == 0)
+        {
+            realLength--;
+        }
+
+        if (realLength == arr.Length) { return arr; }
+
+        uint[] trimmed = new uint[realLength];
+        Array.Copy(arr, trimmed, realLength);
+
+        return trimmed;
     }
 }

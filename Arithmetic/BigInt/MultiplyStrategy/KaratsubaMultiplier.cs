@@ -75,22 +75,7 @@ internal class KaratsubaMultiplier : IMultiplier
         uint[] result = BetterBigInteger.AddMagnitudes(z0, shiftedZMid);
         result = BetterBigInteger.AddMagnitudes(result, shiftedZ2);
 
-        return TrimZeros(result);
+        return BetterBigInteger.TrimZeros(result);
     }
 
-    private static uint[] TrimZeros(uint[] arr)
-    {
-        int realLength = arr.Length;
-        while (realLength > 1 && arr[realLength - 1] == 0)
-        {
-            realLength--;
-        }
-
-        if (realLength == arr.Length) { return arr; }
-
-        uint[] trimmed = new uint[realLength];
-        Array.Copy(arr, trimmed, realLength);
-
-        return trimmed;
-    }
 }
